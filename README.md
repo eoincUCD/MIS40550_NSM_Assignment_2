@@ -1,5 +1,11 @@
 # Modelling a Community: 
 # Network Software and Parkrun Data
+
+<br />
+
+<img src="https://raw.githubusercontent.com/eoincUCD/Modelling_Parkrun_Community/master/Archive/parkrun-logo.jpg"> 
+<br />
+
 ## MIS40550 Network Software Modelling, Assignment 2
 
 

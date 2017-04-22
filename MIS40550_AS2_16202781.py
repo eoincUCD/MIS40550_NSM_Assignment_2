@@ -46,7 +46,7 @@ sample_races = 10  # number of races for small sample, default 10. Ensure this i
 # Generate all weekly graphs, saved separately
 def generate_weekly_graphs(total_races=204):
     # Function to run each weekly graph generation in a separate process - CPU intensive
-    # Not perfect but does the job
+    # Not perfect but does the job todo - only start 1 process for each cope on PC, wait and only start after one ends
     print("Generating networks - this will take sometime.")
     startTime = time.time()
     out_file_name = "results/generate_results.txt"
@@ -93,8 +93,8 @@ def generate(in_file, out_file_name):  # Generate a graph from weekly results
     df = pandas.read_excel(in_file)
 
     # Read number of rows in dataframe
-    # entries = df.shape[0]
-    entries = 10
+    entries = df.shape[0]
+    # entries = 10 todo - make sure this option is off
 
     for i in range(entries):                 # Iterate through rows
         j = i-1                              # Connecting previous nodes working backwards through spreadsheet dataframe
@@ -236,7 +236,7 @@ def scale(x):  # scale to never reach 1 (100% probability)
 def erdos_renyi():
     random.seed(12345)
     x = 10
-    N = (100, 1000)  # 5000 was also included to create large graph
+    N = (100, 1000, 5000)  # 5000 was also included to create large graph
     for n in N:
         pn = n / 10000
         G = nx.erdos_renyi_graph(n, pn)
@@ -249,6 +249,7 @@ def erdos_renyi():
         out_file = "data/erdos_" + str(n) + "_network.csv"
         nx.write_edgelist(G, out_file, delimiter=',', data=['weight'])
         print("Erdos_renyi graph created as", out_file)
+        # todo timing for Erdos Renyi
     return
 
 
@@ -287,7 +288,7 @@ def plot_all(in_file):
     plot_title = "Unadjusted Degree Histogram for " + in_file
     plot_degree(G, out_file, plot_title)
     for edge in G.edges():
-        if G[edge[0]][edge[1]]["weight"] < 0.5:
+        if scale(G[edge[0]][edge[1]]["weight"]) < 0.5:
             G.remove_edge(edge[0], edge[1])
     out_file = "results/" + "degree_histogram_adjusted_" + in_file + ".png"
     plot_title = "Adjusted Degree Histogram for " + in_file
@@ -307,6 +308,76 @@ def plot_degree(G, out_file, plot_title):
     # plt.show()
 
 
+def simulate(in_file, maxits):
+    random.seed(12345)
+    in_file_name = "data/" + in_file
+    out_file_name = "data/" + "simulate_" + in_file + ".csv"
+
+    G = nx.read_edgelist(in_file_name, delimiter=",", data=(('weight', float),))
+
+    largest_node = "NULL"
+    largest_node_size = 0
+    for n in G.nodes():   # Find node with most connections - message starts here
+        G.node[n]["state"] = 0
+        if len(G.neighbors(n)) > largest_node_size:
+            largest_node = n
+            largest_node_size = len(G.neighbors(n))
+
+    G.node[largest_node]["state"] = 1  # Set node of most connections state to 1
+
+    out_file = open(out_file_name, "w")  # Store initial states
+    for n in G.nodes():
+        out_file.write(str(G.node[n]["state"]) + ",")
+    out_file.close()
+
+    old_state = {}  # used to stop iteration loop if there is no state change
+    x = 0
+    for i in range(maxits):  # Loop through each step for x number of iterations max
+        G = step(G, out_file_name)  # Complete step
+        new_state = {}
+        for u in G.nodes():
+            new_state[u] = G.node[u]["state"]
+        if old_state == new_state:  # Check for steady state
+            x = i
+            break
+        old_state = new_state
+
+    number_informed = 0
+    for u in G.nodes():
+        if G.node[u]["state"] == 2:
+            number_informed += 1
+
+    print("Simulation saved for", out_file_name)
+    print("Iterations to steady state:", x, ". . . Number informed: ", number_informed, "/", str(G.order()))
+    return
+
+
+def step(G, out_file_name):
+    new_state = {}
+    for u, d in G.nodes(data=True):
+        if G.node[u]["state"] == 1:  # If a node has received the message, do something
+            for v in G.neighbors(u):
+                if G.node[v]["state"] == 0:  # If that nodes neighbour is state 0, maybe pass on message
+                    if scale(G[v][u]["weight"]) > random.random():  # Pass on message based on weight probability
+                        # todo erdis remi graphs should not be using scale
+                        new_state[v] = 1
+            new_state[u] = 2  # That node is now finished
+        else:
+            new_state[u] = G.node[u]["state"]  # Used if node was not changed
+
+    for u in G.nodes():  # Update G with new states
+        G.node[u]["state"] = new_state[u]
+
+    out_file = open(out_file_name, "a")  # Save states as a row in CSV
+    out_file.write("\n")
+    for u in G.nodes():
+        out_file.write(str(G.node[u]["state"]) + ",")
+    out_file.close()
+
+    # save node name and state, csv
+    return G
+
+
 if __name__ == "__main__":
     # This section of code was used to generate the full network, advised not to run unless you have 3+ hours
     print("Step 1/8 - Generate parkrun networks from raw data:")
@@ -321,30 +392,39 @@ if __name__ == "__main__":
     print("")
 
     print("Step 3/8 - Generate random Erdos Remi graphs and save:")
-    # erdos_renyi()
     print("Erdos Remi networks created previously.")
+    # erdos_renyi()
     print("")
 
     print("Step 4/8 - Read networks and examine properties:")
-    graph_properties("1_network.csv")  # Save properties of first race
-    graph_properties("sample_network.csv")  # Save properties of sample races - takes 5 mins
+    # graph_properties("1_network.csv")  # Save properties of first race
+    # graph_properties("sample_network.csv")  # Save properties of sample races - takes 5 mins
     # graph_properties("full_network.csv")  # Save properties of full network - takes 10 hours
-    graph_properties("erdos_100_network.csv")  # Save properties of erdos_100
-    graph_properties("erdos_1000_network.csv")  # Save properties of erdos_1000
-    # graph_properties("erdos_5000_network.csv")  # Save properties of erdos_10000 - takes 5 hours
+    # graph_properties("erdos_100_network.csv")  # Save properties of erdos_100
+    # graph_properties("erdos_1000_network.csv")  # Save properties of erdos_1000
+    # graph_properties("erdos_5000_network.csv")  # Save properties of erdos_10000 - takes 5 hours todo rerun for latest
     print("")
 
     print("Step 5/8 - Plot networks:")
-    plot_all("1_network.csv")
-    plot_all("sample_network.csv")
-    plot_all("full_network.csv")  # Takes 5mins
-    plot_all("erdos_100_network.csv")
-    plot_all("erdos_1000_network.csv")
-    plot_all("erdos_5000_network.csv")  # Takes 10mins
+    # plot_all("1_network.csv")
+    # plot_all("sample_network.csv")
+    # plot_all("full_network.csv")  # Takes 5mins
+    # plot_all("erdos_100_network.csv")
+    # plot_all("erdos_1000_network.csv")
+    # plot_all("erdos_5000_network.csv")  # Takes 10mins
+    print("")
 
-    # print("Step 7/8 - Simulate Information Flow:")
-    # todo
-    # simulate flow and print results
+    print("Step 6/8 - Simulate Information Flow:")
+    simulate("1_network.csv", 20)
+    simulate("sample_network.csv", 20)
+    simulate("full_network.csv", 20)  # Takes 5 mins max for 100 its
+    simulate("erdos_100_network.csv", 20)
+    simulate("erdos_1000_network.csv", 20)
+    simulate("erdos_5000_network.csv", 20)
+    print("")
+
+    print("Step 7/7 - Save Simulation Plots:")
+    # todo simulate flow and print results
 
 
 

@@ -1,0 +1,9 @@
+Date and time: 2017-04-21 00:26:57.823571
+erdos_5000_network.csv properties: 
+Order: 5000
+Size: 6250566
+Density: 0.500145309062
+Clustering coefficient: 0.5001646376612724
+Diameter: 2
+Size of largest component: 5000
+Time taken to complete graph properties function: 18864.16445016861

@@ -1,0 +1,9 @@
+Date and time: 2017-04-22 04:57:15.954862
+sample_network.csv properties: 
+Order: 1464
+Size: 356140
+Density: 0.332556428329
+Clustering coefficient: 0.8192810720534284
+Diameter: 2
+Size of largest component: 1464
+Time taken to complete graph properties function: 222.12878727912903

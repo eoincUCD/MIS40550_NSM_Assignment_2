@@ -1,0 +1,9 @@
+Date and time: 2017-04-22 04:56:59.590433
+1_network.csv properties: 
+Order: 331
+Size: 54615
+Density: 1.0
+Clustering coefficient: 1.0
+Diameter: 1
+Size of largest component: 331
+Time taken to complete graph properties function: 13.322422981262207

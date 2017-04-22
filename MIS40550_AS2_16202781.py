@@ -26,7 +26,7 @@ Week 9 lab solutions
 
 
 import networkx as nx
-import pandas
+import pandas as pd
 import numpy as np
 import time
 import datetime
@@ -90,7 +90,7 @@ def generate(in_file, out_file_name):  # Generate a graph from weekly results
 
     # Read excel file into pandas dataframe. Data file in format with column names:
     # Pos  ↓, parkrunner  ↓, Time  ↓, Age Cat  ↓, Age Grade  ↓, ↓, Gender Pos  ↓, # Club  ↓, Note  ↓, Total Runs  ↓
-    df = pandas.read_excel(in_file)
+    df = pd.read_excel(in_file)
 
     # Read number of rows in dataframe
     entries = df.shape[0]
@@ -253,7 +253,7 @@ def erdos_renyi():
     return
 
 
-# Print graph properties of input graph
+# Save graph properties of input graph
 def graph_properties(in_file_name):
     startTime = time.time()
     G = nx.read_edgelist("data/" + in_file_name, delimiter=",", data=(('weight', float),))  # Read graph
@@ -281,6 +281,7 @@ def graph_properties(in_file_name):
     return
 
 
+# Save plots of input graph
 def plot_all(in_file):
     in_file_name = "data/" + in_file
     out_file = "results/" + "degree_histogram_" + in_file + ".png"
@@ -296,6 +297,7 @@ def plot_all(in_file):
     print("Plots saved for " + in_file)
 
 
+# Used in plotting
 def plot_degree(G, out_file, plot_title):
     degree_sequence=sorted(nx.degree(G).values(),reverse=True) # degree sequence
     # Plot histogram
@@ -308,10 +310,11 @@ def plot_degree(G, out_file, plot_title):
     # plt.show()
 
 
+# Save simulation of input graph
 def simulate(in_file, maxits):
     random.seed(12345)
     in_file_name = "data/" + in_file
-    out_file_name = "data/" + "simulate_" + in_file + ".csv"
+    out_file_name = "data/" + "simulate_" + in_file
 
     G = nx.read_edgelist(in_file_name, delimiter=",", data=(('weight', float),))
 
@@ -352,8 +355,10 @@ def simulate(in_file, maxits):
     return
 
 
+# Used in simulation
 def step(G, out_file_name):
     new_state = {}
+    random.seed(12345)
     for u, d in G.nodes(data=True):
         if G.node[u]["state"] == 1:  # If a node has received the message, do something
             for v in G.neighbors(u):
@@ -376,6 +381,40 @@ def step(G, out_file_name):
 
     # save node name and state, csv
     return G
+
+
+def plot_sim(in_file):
+    in_file_name = "data/simulate_" + in_file
+    df = pd.read_csv(in_file_name,sep=',',header=None)
+
+    state_0 = [0] * len(df)
+    state_1 = [0] * len(df)
+    state_2 = [0] * len(df)
+
+    for i in range(len(df)):
+        for j in df.iloc[i].values[:]:
+            if j == 0:
+                state_0[i] += 1
+            if j == 1:
+                state_1[i] += 1
+            if j == 2:
+                state_2[i] += 1
+
+    plot_title = "State change over time iteration " + in_file
+    out_file = "results/" + "simulation_plot_" + in_file + ".png"
+    plt.figure()
+    plt.plot(state_0, label='State 0 (No Message)')
+    plt.plot(state_1, label='State 1 (Message Received)')
+    plt.plot(state_2, label='State 2 (Inactive)')
+    plt.legend()
+    plt.title(plot_title)
+    plt.ylabel("Number of Nodes")
+    plt.xlabel("Time Iterations")
+    plt.savefig(out_file)
+    # plt.show()
+
+    print("Simulation plot saved for", in_file)
+    return
 
 
 if __name__ == "__main__":
@@ -424,7 +463,12 @@ if __name__ == "__main__":
     print("")
 
     print("Step 7/7 - Save Simulation Plots:")
-    # todo simulate flow and print results
+    plot_sim("1_network.csv")
+    plot_sim("sample_network.csv")
+    plot_sim("full_network.csv")
+    plot_sim("erdos_100_network.csv")
+    plot_sim("erdos_1000_network.csv")
+    plot_sim("erdos_5000_network.csv")
 
 
 

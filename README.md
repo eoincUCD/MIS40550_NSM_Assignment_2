@@ -9,4 +9,7 @@
 ## MIS40550 Network Software Modelling, Assignment 2
 
 
-First upload on Friday night 22/4/17. Last main thing to include is the simulation of information flow but I think I can do that in a few hours tomorrow. Will spend Sunday putting the report together.
+First upload on Friday night 21/4/17. Last main thing to include is the simulation of information flow but I think I can do that in a few hours tomorrow. Will spend Sunday putting the report together.
+
+22/4/17: Simulation and plots complete. All initial results uploaded along with updated code.
+Still to do - Report, upload data files somehow (900mb), clean up, annotate code, make graphs pretty.

@@ -1,6 +1,6 @@
 """
 ************************************************************************************************************************
-Project Title: Modelling a Community with Network Software and Parkrun Data
+Project Title: Modelling a Community with Network Software and parkrun Data
 ************************************************************************************************************************
 UCD Assignment Details:
 Date Started: 07/03/17
@@ -13,13 +13,28 @@ Assessment Title: Network Software Modelling Assignment 2
 Module Co-ordinator: Dr James McDermott
 ************************************************************************************************************************
 Instructions:
-Only run generate by itself - multiprocessing is not perfectly implemented
+1.  Copy this python file into a folder
+2.  Add a data folder and place data files there
+    Link: https://drive.google.com/drive/folders/0B9kelMwrpRsROF9UZFY5SzZZUzg
+    Data processing results will be saved in the data folder
+3.  Add a results folder
+    Run whichever functions you select - make sure you check the run times
+    Results will be saved in the results folder
 ************************************************************************************************************************
 Functions included:
+generate_weekly_graphs - Generate all weekly graphs, saved separately
+combine_networks - Combine a sample into one network. Combine all into full network
+erdos_renyi - Create random graphs
+graph_properties - Save graph properites to text file in results folder
+plot_graphs - Save degree plots to results folder
+simulate - Simulate information flow. Save results to data folder
+plot_sim - Save simulation plots to results folder
 ************************************************************************************************************************
-Notes:
+Github:
+The project was made available on Github with the following URL. Note that the data files are too big to store on Github
+https://github.com/eoincUCD/Modelling_Parkrun_Community
 ************************************************************************************************************************
-References
+References:
 Week 9 lab solutions
 ************************************************************************************************************************
 """
@@ -46,7 +61,7 @@ sample_races = 10  # number of races for small sample, default 10. Ensure this i
 # Generate all weekly graphs, saved separately
 def generate_weekly_graphs(total_races=204):
     # Function to run each weekly graph generation in a separate process - CPU intensive
-    # Not perfect but does the job todo - only start 1 process for each cope on PC, wait and only start after one ends
+    # Not perfect but does the job
     print("Generating networks - this will take sometime.")
     startTime = time.time()
     out_file_name = "results/generate_results.txt"
@@ -54,7 +69,7 @@ def generate_weekly_graphs(total_races=204):
     out_file.write("Date and time: " + str(datetime.datetime.now()) + "\n")
     out_file.close()
     jobs = []
-    for i in range(total_races):
+    for i in range(total_races):  # Separate process for each dataset
         in_file = "data/" + str(i+1) + ".xlsx"
         p = multiprocessing.Process(target=worker, args=(in_file,out_file_name))
         jobs.append(p)
@@ -62,7 +77,7 @@ def generate_weekly_graphs(total_races=204):
     for job in jobs:
         job.join()
     out_file = open(out_file_name, "a")
-    out_file.write("Time taken to generate: " + str(time.time() - startTime))
+    out_file.write("Time taken to generate: " + str(time.time() - startTime))  # Log time taken
     out_file.close()
 
 
@@ -80,10 +95,9 @@ def generate(in_file, out_file_name):  # Generate a graph from weekly results
     same_race = 0.005                               # Variable to control weight given to people who ran in same race
     same_name = 0.10                                # Variable to control weight given to people with same second name
     same_club = 0.50                                # Variable to control weight given to people with same club
-    close_pos = np.arange(0.000,0.11,0.01)        # Array - closeness weight for finishing close together position
+    close_pos = np.arange(0.000,0.11,0.01)          # Array - closeness weight for finishing close together position
     close_time_limit = 10                           # Set time limit of who to increase weighting (< x seconds)
-    close_time_increment = 0.025
-    # Array - closeness weight for close together time
+    close_time_increment = 0.025                    # Array - closeness weight for close together time
     close_time = np.arange(0.000,close_time_limit*close_time_increment,close_time_increment)[::-1]
 
     G = nx.Graph()
@@ -136,12 +150,6 @@ def generate(in_file, out_file_name):  # Generate a graph from weekly results
                             new_weight = G[df.iloc[i, 1]][df.iloc[j, 1]]['weight'] + same_club  # Include same club
                             G.add_edge(df.iloc[i, 1], df.iloc[j, 1], weight=new_weight)
 
-                    # Scale weight to never reach 1 (100% probability of knowing each other)
-                    # Not scaling at this point
-                    # scaled_weight = scale(G[df.iloc[i,1]][df.iloc[j,1]]['weight'])
-                    # G.add_edge(df.iloc[i, 1], df.iloc[j, 1], weight=scaled_weight)
-
-                    # print(i, df.iloc[i, 1], df.iloc[j, 1], G[df.iloc[i, 1]][df.iloc[j, 1]]['weight'])
             j -= 1
 
     endTime = time.time()
@@ -226,7 +234,7 @@ def add_network(G, infile):  # Add a network to graph G in RAM
     return G
 
 
-# Convert weights to a probability less than 1 of two preople knowing each other
+# Convert weights to a probability less than 1 of two people knowing each other
 def scale(x):  # scale to never reach 1 (100% probability)
     y = 1 - 1/(1+x)
     return y
@@ -249,7 +257,6 @@ def erdos_renyi():
         out_file = "data/erdos_" + str(n) + "_network.csv"
         nx.write_edgelist(G, out_file, delimiter=',', data=['weight'])
         print("Erdos_renyi graph created as", out_file)
-        # todo timing for Erdos Renyi
     return
 
 
@@ -282,18 +289,18 @@ def graph_properties(in_file_name):
 
 
 # Save plots of input graph
-def plot_all(in_file):
+def plot_graphs(in_file):
     in_file_name = "data/" + in_file
     out_file = "results/" + "degree_histogram_" + in_file + ".png"
     G = nx.read_edgelist(in_file_name, delimiter=",", data=(('weight', float),))
-    plot_title = "Unadjusted Degree Histogram for " + in_file
-    plot_degree(G, out_file, plot_title)
-    for edge in G.edges():
+    plot_title = "Degree Histogram (All connections) for " + in_file
+    plot_degree(G, out_file, plot_title)  # Plot unadjusted degree graph
+    for edge in G.edges():  # Remove any edges that are less than 0.5 probability of knowing each other
         if scale(G[edge[0]][edge[1]]["weight"]) < 0.5:
             G.remove_edge(edge[0], edge[1])
     out_file = "results/" + "degree_histogram_adjusted_" + in_file + ".png"
-    plot_title = "Adjusted Degree Histogram for " + in_file
-    plot_degree(G, out_file, plot_title)
+    plot_title = "Degree Histogram (P > 0.5) for " + in_file
+    plot_degree(G, out_file, plot_title)  # Plot adjusted graph only for greater than 0.5 probability
     print("Plots saved for " + in_file)
 
 
@@ -302,9 +309,9 @@ def plot_degree(G, out_file, plot_title):
     degree_sequence=sorted(nx.degree(G).values(),reverse=True) # degree sequence
     # Plot histogram
     plt.figure()
-    plt.hist(degree_sequence, bins=20, color='blue')
+    plt.hist(degree_sequence, bins=30, color='#3399ff')
     plt.title(plot_title)
-    plt.ylabel("Number of Nodes")
+    plt.ylabel("Number of Nodes (Network total: " + str(G.order()) + ")")
     plt.xlabel("Degree")
     plt.savefig(out_file)
     # plt.show()
@@ -383,6 +390,7 @@ def step(G, out_file_name):
     return G
 
 
+# Plot simulation results
 def plot_sim(in_file):
     in_file_name = "data/simulate_" + in_file
     df = pd.read_csv(in_file_name,sep=',',header=None)
@@ -421,18 +429,18 @@ if __name__ == "__main__":
     # This section of code was used to generate the full network, advised not to run unless you have 3+ hours
     print("Step 1/8 - Generate parkrun networks from raw data:")
     print("Parkrun networks generated previously.")
-    # generate_weekly_graphs(total_races)
+    # generate_weekly_graphs(total_races)  # Takes 4 hours
     print("")
 
     # This section creates a sample of default 10 races and also the full network for all races - takes ~10mins
     print("Step 2/8 - Combine and save parkrun networks:")
     print("Parkrun networks combined previously.")
-    # combine_networks(total_races, sample_races)
+    # combine_networks(total_races, sample_races)  # Takes 5 mins
     print("")
 
     print("Step 3/8 - Generate random Erdos Remi graphs and save:")
     print("Erdos Remi networks created previously.")
-    # erdos_renyi()
+    # erdos_renyi()  # Takes 20mins or so I think?? Need to confirm
     print("")
 
     print("Step 4/8 - Read networks and examine properties:")
@@ -441,35 +449,31 @@ if __name__ == "__main__":
     # graph_properties("full_network.csv")  # Save properties of full network - takes 10 hours
     # graph_properties("erdos_100_network.csv")  # Save properties of erdos_100
     # graph_properties("erdos_1000_network.csv")  # Save properties of erdos_1000
-    # graph_properties("erdos_5000_network.csv")  # Save properties of erdos_10000 - takes 5 hours todo rerun for latest
+    # graph_properties("erdos_5000_network.csv")  # Save properties of erdos_5000 - takes 5 hours
     print("")
 
     print("Step 5/8 - Plot networks:")
-    # plot_all("1_network.csv")
-    # plot_all("sample_network.csv")
-    # plot_all("full_network.csv")  # Takes 5mins
-    # plot_all("erdos_100_network.csv")
-    # plot_all("erdos_1000_network.csv")
-    # plot_all("erdos_5000_network.csv")  # Takes 10mins
+    # plot_graphs("1_network.csv")
+    # plot_graphs("sample_network.csv")
+    # plot_graphs("full_network.csv")  # Takes 5mins
+    # plot_graphs("erdos_100_network.csv")
+    # plot_graphs("erdos_1000_network.csv")
+    # plot_graphs("erdos_5000_network.csv")  # Takes 10mins
     print("")
 
     print("Step 6/8 - Simulate Information Flow:")
-    simulate("1_network.csv", 20)
-    simulate("sample_network.csv", 20)
-    simulate("full_network.csv", 20)  # Takes 5 mins max for 100 its
-    simulate("erdos_100_network.csv", 20)
-    simulate("erdos_1000_network.csv", 20)
-    simulate("erdos_5000_network.csv", 20)
+    # simulate("1_network.csv", 20)
+    # simulate("sample_network.csv", 20)
+    # simulate("full_network.csv", 20)  # Takes 5 mins
+    # simulate("erdos_100_network.csv", 20)
+    # simulate("erdos_1000_network.csv", 20)
+    # simulate("erdos_5000_network.csv", 20)  # Takes 10 mins
     print("")
 
     print("Step 7/7 - Save Simulation Plots:")
-    plot_sim("1_network.csv")
-    plot_sim("sample_network.csv")
-    plot_sim("full_network.csv")
-    plot_sim("erdos_100_network.csv")
-    plot_sim("erdos_1000_network.csv")
-    plot_sim("erdos_5000_network.csv")
-
-
-
-
+    # plot_sim("1_network.csv")
+    # plot_sim("sample_network.csv")
+    # plot_sim("full_network.csv")
+    # plot_sim("erdos_100_network.csv")
+    # plot_sim("erdos_1000_network.csv")
+    # plot_sim("erdos_5000_network.csv")

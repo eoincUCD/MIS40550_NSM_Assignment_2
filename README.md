@@ -13,3 +13,8 @@ First upload on Friday night 21/4/17. Last main thing to include is the simulati
 
 22/4/17: Simulation and plots complete. All initial results uploaded along with updated code.
 Still to do - Report, upload data files somehow (900mb), clean up, annotate code, make graphs pretty.
+
+23/04/17: Dataset can now be downloaded from here:
+https://drive.google.com/drive/folders/0B9kelMwrpRsROF9UZFY5SzZZUzg?usp=sharing
+
+

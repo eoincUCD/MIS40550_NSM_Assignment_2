@@ -1,0 +1,9 @@
+Date and time: 2017-04-20 20:41:37.075367
+full_network.csv properties: 
+Order: 14070
+Size: 8514729
+Density: 0.086028727437
+Clustering coefficient: 0.7671925588721505
+Diameter: 2
+Size of largest component: 14070
+Time taken to complete graph properties function: 67659.69828629494

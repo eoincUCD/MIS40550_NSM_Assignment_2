@@ -17,4 +17,4 @@ Still to do - Report, upload data files somehow (900mb), clean up, annotate code
 23/04/17: Dataset can now be downloaded from here:
 https://drive.google.com/drive/folders/0B9kelMwrpRsROF9UZFY5SzZZUzg?usp=sharing
 
-23/04/17: Report is almost finished and is stored in the documents folder. Recommend reading this before runnning any code.
+23/04/17: Report is finished and is stored in the documents folder. Recommend reading this before runnning any code.
